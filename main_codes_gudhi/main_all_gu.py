@@ -13,7 +13,10 @@ import json
 import numpy as np
 import yaml
 
-import mdl1_bolPH_gu, mdl2_simp_bol, mdl_eval
+try:
+    import mdl1_bolPH_gu,mdl2_simp_bol,mdl_eval
+except:
+    from main_codes_gudhi import mdl1_bolPH_gu, mdl2_simp_bol, mdl_eval
 
 from utils.mdl_io import create_folder
 
@@ -141,13 +144,21 @@ def main(cfg:dict):
     return "done."
 
 
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser('phshape')
+    parser.add_argument("--config", type=str, default="../config/trd/config_trd_gu_400.yaml",
+                        help="the path of config file.")
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
     ###############
     # load yaml file
     ###############
-    with open("../config/trd/config_trd_gu_400.yaml", "r+") as cfg_f:
+    args = parse_args()
+    cfg_path = args.config
+    with open(cfg_path, "r+") as cfg_f:
         cfg = yaml.load(cfg_f, Loader=yaml.FullLoader)
 
     main(cfg)
