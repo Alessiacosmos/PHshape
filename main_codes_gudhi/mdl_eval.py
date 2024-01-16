@@ -102,7 +102,6 @@ if __name__ == "__main__":
 
     # trd dataset
     dataset_type = "trd"
-    # shp_gt_path = "/home/gefeik/PhD-work/footprint polygon/footprint polygon/original materials/FKB-Shape/Basisdata_5001_Trondheim_5972_FKB-Bygning_SOSI_Bygning_FLATE.shp"
     shp_gt_path = "/home/gefeik/PhD-work/footprint polygon/footprint polygon/own training/res/shp/true_shape/real_footprint.shp"
     simp_res_folder = "/home/gefeik/PhD-work/footprint polygon/footprint_polygon_v2/res/main_all_gu/trd/to=0.30_di=0.00_haus_siou-1.00/2_sbol"
     bld_list = np.loadtxt("../config/trd_test.txt").astype("int")

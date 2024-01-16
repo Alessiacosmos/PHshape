@@ -118,7 +118,6 @@ def load_shp_FKB(shp_path:str, bld_list:list or np.ndarray) -> gpd.GeoDataFrame:
 
 def load_shp_Isprs(shp_path:str, bld_list:list or np.ndarray) -> gpd.GeoDataFrame:
     poly_all = gpd.read_file(shp_path)
-    # poly_all = poly_all[['name', 'geometry']]
     poly_all["name"] = poly_all["bid"]
     poly_all = poly_all.rename(columns={"name": "building_id", 'geometry': 'geometry'})
 
@@ -135,8 +134,6 @@ def load_shp_Isprs(shp_path:str, bld_list:list or np.ndarray) -> gpd.GeoDataFram
 def load_shp_Isprs_v2(shp_path:str, bld_list:list or np.ndarray) -> gpd.GeoDataFrame:
     poly_all = gpd.read_file(shp_path)
     poly_all["building_id"] = poly_all["bid"]
-    # poly_all = poly_all[['bid', 'geometry']]
-    # poly_all = poly_all.rename(columns={"bid": "building_id", 'geometry': 'geometry'})
 
     poly_eval = poly_all[poly_all.building_id.isin(bld_list)]  # Filter med relevante id
     poly_eval = poly_eval.set_index(['building_id'])
@@ -169,7 +166,6 @@ def make_valid(polygon):
         pp2 = polygon.buffer(buffer_size, cap_style=3)
         if (pp2.geom_type == "Polygon"):
             potential_polygon = Polygon(list(pp2.exterior.coords))
-            # refined = polygon.simplify(simple_value, preserve_topology=True)
             potential_polygon = potential_polygon.buffer(-buffer_size, cap_style=3)
             return potential_polygon
         else:
@@ -187,14 +183,6 @@ def intersection_union(pred_poly:Polygon, poly_gt_eval: gpd.GeoDataFrame, bid:fl
     """
     if(pred_poly is None):
         return None
-    # if pred_poly.is_valid:
-    #     gt_poly = poly_gt_eval.loc[bid].geometry
-    #     polygon_intersection = gt_poly.intersection(pred_poly).area
-    #     polygon_union = gt_poly.union(pred_poly).area
-    #     IOU = polygon_intersection / polygon_union
-    #     return IOU
-    # else:
-    #     return None
 
     if not pred_poly.is_valid:
         pred_poly = make_valid(pred_poly)
@@ -204,6 +192,7 @@ def intersection_union(pred_poly:Polygon, poly_gt_eval: gpd.GeoDataFrame, bid:fl
     polygon_union = gt_poly.union(pred_poly).area
     IOU = polygon_intersection / polygon_union
     return IOU
+
 
 def hausdorff_dis(pred_poly:Polygon, poly_gt_eval: gpd.GeoDataFrame, bid:float or int or str) -> float or None:
     """
@@ -216,12 +205,6 @@ def hausdorff_dis(pred_poly:Polygon, poly_gt_eval: gpd.GeoDataFrame, bid:float o
     """
     if(pred_poly is None):
         return None
-    # if pred_poly.is_valid:
-    #     gt_poly = poly_gt_eval.loc[bid].geometry
-    #     hd = gt_poly.hausdorff_distance(pred_poly)
-    #     return hd
-    # else:
-    #     return None
 
     if not pred_poly.is_valid:
         pred_poly = make_valid(pred_poly)
@@ -242,12 +225,6 @@ def hausdorff_dis_v2(pred_poly:Polygon, poly_gt_eval: gpd.GeoDataFrame, bid:floa
     """
     if(pred_poly is None):
         return None
-    # if pred_poly.is_valid:
-    #     gt_poly = poly_gt_eval.loc[bid].geometry
-    #     hd = gt_poly.hausdorff_distance(pred_poly)
-    #     return hd
-    # else:
-    #     return None
 
     if not pred_poly.is_valid:
         pred_poly = make_valid(pred_poly)
