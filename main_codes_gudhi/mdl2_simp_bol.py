@@ -19,11 +19,6 @@ from utils.mdl_io import load_cloud, load_json
 from utils.mdl_geo import obj2Geo, get_PolygonCoords_withInter, arr2Geo, poly2Geojson
 from utils.mdl_visual import drawmultipolygon, show_ifd_shape
 
-np.set_printoptions(suppress=True)
-pd.set_option('display.max_columns', None) #显示所有列
-pd.set_option('max_colwidth',100) #设置value的显示长度为100，默认为50
-pd.set_option('display.width',300) #设置总裂狂
-
 
 def main_simp_ol(data_basic_ol_folder: str,
                  data_basic_ol_type: str,
@@ -36,6 +31,7 @@ def main_simp_ol(data_basic_ol_folder: str,
                  savename_bfr: str="",
                  is_unrefresh_save: bool = False,
                  is_save_fig: bool = False,
+                 is_Debug: bool = False,
                  **kwargs):
     num_bld = len(bld_list)
 
@@ -78,7 +74,7 @@ def main_simp_ol(data_basic_ol_folder: str,
                             bldi_bfr_optim + bfr_tole - bfr_otdiff)  # bfr_tole/2 # np.ceil(0.0625 * (bldi_bfr_optim + bfr_tole) / 2 * 100) / 100
                 b_oli_simp_ext, b_oli_simp_ints, b_oli_simp = simp_poly_Fd(b_oli,
                                                                            thres_mode="haus", thres_haus=thres_haus,
-                                                                           isDebug=True)
+                                                                           isDebug=is_Debug)
             elif simp_method == "iou":
                 ##############
                 # simplify by using Fourier descriptor -- stop by iou
@@ -88,7 +84,7 @@ def main_simp_ol(data_basic_ol_folder: str,
                 except Exception as e:
                     raise e
                 b_oli_simp_ext, b_oli_simp_ints, b_oli_simp = simp_poly_Fd(b_oli, thres_mode="iou",
-                                                                           thres_simparea=thres_simparea, isDebug=True)
+                                                                           thres_simparea=thres_simparea, isDebug=is_Debug)
             else:
                 ##############
                 # simplify by using existing methods from shapely libray

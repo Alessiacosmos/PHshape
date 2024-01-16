@@ -13,9 +13,7 @@ import json
 import numpy as np
 import yaml
 
-import mdl1_bolPH_gu
-# from main_codes_clean import mdl2_simp_bol, mdl_eval
-import mdl2_simp_bol, mdl_eval
+import mdl1_bolPH_gu, mdl2_simp_bol, mdl_eval
 
 from utils.mdl_io import create_folder
 
@@ -30,8 +28,8 @@ def get_params(cfg_params:dict) -> (int, int, float, float, float, str):
 
 
     # calculate other params
-    bfr_tole = np.ceil(cfg_params["point_spacing"] * 10) / 10
-    bfr_otdiff = np.floor(cfg_params["point_spacing"]/3*10)/10
+    bfr_tole = np.ceil(cfg_params["point_spacing"] * 10) / 10  # delta_rb+
+    bfr_otdiff = np.floor(cfg_params["point_spacing"]/3*10)/10 # delta_rb-
 
     return pre_cloud_num, down_sample_num, bfr_tole, bfr_otdiff, thres_simpiou, simp_type
 
@@ -83,6 +81,7 @@ def main(cfg:dict):
     # 1. get params and data-io paths.
     #########################
     # 1.1. params
+    # bfr_tole: delta_rb+; bfr_otdiff: delta_rb-
     pre_cloud_num, down_sample_num, bfr_tole, bfr_otdiff, thres_simpiou, simp_type = get_params(cfg["params"])
     # 1.2. data pathes and out pathes
     ds_type, cloud_root_folder, cloud_list_path, cloud_type, \
@@ -121,7 +120,8 @@ def main(cfg:dict):
                                simp_method=simp_type,
                                savename_bfr=save_bfroptim_path,
                                is_unrefresh_save=False,
-                               is_save_fig=cfg["data"]["output"]["is_save_simpfig"])
+                               is_save_fig=cfg["data"]["output"]["is_save_simpfig"],
+                               is_Debug=isdebug)
 
     #########################
     # 4. evaluation
@@ -129,14 +129,13 @@ def main(cfg:dict):
     cfg_eval = cfg["eval"]
     if cfg_eval["is_eval"]==True:
         eval_gt_path, is_save_res = get_evalparams(cfg_eval)
-        for check_folder in [out_bol_folder, out_simp_folder]:
-            mdl_eval.main_eval(check_folder, res_type=".json",
-                               shp_gt_path=eval_gt_path,
-                               dataset_type=ds_type,
-                               out_folder=out_eval_folder,
-                               res_base=os.path.basename(check_folder),
-                               bld_list=bld_list,
-                               is_save_res=is_save_res)
+        mdl_eval.main_eval(out_simp_folder, res_type=".json",
+                           shp_gt_path=eval_gt_path,
+                           dataset_type=ds_type,
+                           out_folder=out_eval_folder,
+                           res_base=os.path.basename(out_simp_folder),
+                           bld_list=bld_list,
+                           is_save_res=is_save_res)
 
 
     return "done."
@@ -148,7 +147,7 @@ if __name__ == "__main__":
     ###############
     # load yaml file
     ###############
-    with open("../config/trd/config_trd_gu_400_test.yaml", "r+") as cfg_f:
+    with open("../config/trd/config_trd_gu_400.yaml", "r+") as cfg_f:
         cfg = yaml.load(cfg_f, Loader=yaml.FullLoader)
 
     main(cfg)

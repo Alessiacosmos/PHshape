@@ -51,7 +51,7 @@ def main_eval(res_folder: str,
             ##############
             # calculate iou
             ##############
-            if "trd" in bld_list:
+            if dataset_type == "trd":
                 b_oli_iou = intersection_union(b_oli, poly_gt_eval=poly_gt_eval, bid=int(bldi_name))
                 b_oli_hd = hausdorff_dis_v2(b_oli, poly_gt_eval=poly_gt_eval, bid=int(bldi_name))
             else:
@@ -72,7 +72,7 @@ def main_eval(res_folder: str,
     ######################
     # save res to gpd
     ######################
-    print(res_df.shape)
+    # print(res_df.shape)
     print(f"{dataset_type}'s mean_IOU: {res_df['IOU'].mean()}")
     print(f"{dataset_type}'s mean_HD: {res_df['HD'].mean()}")
 
