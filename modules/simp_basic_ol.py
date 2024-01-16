@@ -80,7 +80,6 @@ def get_proper_simp_res(poly_used:np.ndarray,
     # 3.3 trunc Fd by using different number parameter, get the simplifed shape
     # & judge whether the threshold is proper or not
     #########################
-    # max_fdshape_num = min(int(poly_vnum), int(np.floor(poly_vnum/5))) # 当简化后的点数比总点数1/5还多的时候，简化几乎没效果
     poly_simp_sele_list = []
     for i in range(3, int(poly_vnum)):
         num_sele_fd = i
@@ -106,7 +105,7 @@ def get_proper_simp_res(poly_used:np.ndarray,
             else:
                 raise ValueError(f"The expected 'thres_mode' is in ['haus', 'iou'], but {thres_mode} was gotten.")
 
-        # 连续3个及3个以上的polygon都满足要求了,意味着结果相对稳定了，就停止循环，输出list中对应的第一个num_sele_fd, 作为简化的个数
+        # when the simplification result is stable (>=3 simplified polygon's hauses/ious continuely meet the thred), stop and output
         if len(poly_simp_sele_list) > 2:
             break
 
@@ -233,7 +232,7 @@ def simp_poly_Extmtd(poly:shapely.geometry, bfr_otdiff:float, bfr_tole:float) ->
     # automatic find the proper simplify result by using a series of
     # simplify_radius(large->small, the larger simplify_radius means the more simplified result).
     for simp_r in simp_rs:
-        # simp_r = 1e-1 *3 # * 2  # 1e-1 is from the buffer 容差 from get_build_bf() -> get_build_bf()
+        # simp_r = 1e-1 *3 # * 2  # 1e-1 is from the buffer tolerance from get_build_bf() -> get_build_bf()
         poly_simp = poly.simplify(simp_r)
         iou_simp_org = stop_by_IoU(poly_simp, poly)
         if iou_simp_org >= 0.90:

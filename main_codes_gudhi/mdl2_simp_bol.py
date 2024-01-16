@@ -71,7 +71,7 @@ def main_simp_ol(data_basic_ol_folder: str,
                 ##############
                 bldi_bfr_optim = all_bfr_optim.loc[all_bfr_optim["bid"] == bldi_name, "bfr_optim"].values[0]
                 thres_haus = (1 - np.cos(30 / 180 * np.pi)) * (
-                            bldi_bfr_optim + bfr_tole - bfr_otdiff)  # bfr_tole/2 # np.ceil(0.0625 * (bldi_bfr_optim + bfr_tole) / 2 * 100) / 100
+                            bldi_bfr_optim + bfr_tole - bfr_otdiff)  # constant * (r_a + delta_rb+ - delta_rb-)
                 b_oli_simp_ext, b_oli_simp_ints, b_oli_simp = simp_poly_Fd(b_oli,
                                                                            thres_mode="haus", thres_haus=thres_haus,
                                                                            isDebug=is_Debug)
