@@ -10,7 +10,7 @@ params:
 data:
   dataset: "trd"
   input:
-    cloud_folder: "data/TRD/for_public/roof_clouds/" # the folder saved roof clouds
+    cloud_folder: "../data/TRD/for_public/roof_clouds/" # the folder saved roof clouds
     cloud_list_path:  "../config/trd_test.txt"  # list of roof ids
     cloud_type: ".las"
     saved_bfr_optim_path: ""  # to speed up the replicated inference, the calculated r_a will be saved to a .csv file.
@@ -22,5 +22,5 @@ data:
 
 eval:
   is_eval: True # whether evaluate the result. for prediction, set it to False
-  eval_gt_path: "data/TRD/for_public/gt_shp/real_footprint_93.shp"
+  eval_gt_path: "../data/TRD/for_public/gt_shp/real_footprint_93.shp"
   is_save_res: True
