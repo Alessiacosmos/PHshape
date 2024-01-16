@@ -1,0 +1,26 @@
+params:
+  pre_cloud_num: 5000   # pre-processing the point cloud data to this target number
+  down_sample_num: 400  # the target number of point cloud data for 1d-persistent homology # 500： 117s;  400: 35s -> use gu: 700: 32s
+  point_spacing: 0.28   # point spacing
+  simp:
+    type: "haus"   # haus, iou or extm, default=haus (the paper's strategy.)
+    thres_iou: 0.9 # available if simp_type="iou"
+  isDebug: False   # whether open debug mode and print the output from middle steps
+
+data:
+  dataset: "trd"
+  input:
+    cloud_folder: "/home/gefeik/PhD-otherData/RoofNTNU/forRoofStruct/las-singleroof/" # the folder saved roof clouds
+    cloud_list_path:  "../config/trd_test.txt"  # list of roof ids
+    cloud_type: ".las"
+    saved_bfr_optim_path: ""  # to speed up the replicated inference, the calculated r_a will be saved to a .csv file.
+  output:
+    out_root_folder: "../res/main_all_gu_400/" # the folder to save the traced boundaries.
+    is_save_simpfig: True # whether save the output of middle steps for debug. default=False
+
+
+
+eval:
+  is_eval: True # whether evaluate the result. for prediction, set it to False
+  eval_gt_path: "/home/gefeik/PhD-work/footprint polygon/footprint polygon/own training/res/shp/true_shape/real_footprint.shp"
+  is_save_res: True
