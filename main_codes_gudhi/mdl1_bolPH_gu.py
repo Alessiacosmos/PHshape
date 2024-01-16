@@ -107,12 +107,7 @@ def main_basicOL(data_root_folder:str,
             with open(savename, "w+") as sf:
                 json.dump(bldi_olpoly_json, sf, indent=4)
 
-            # # ##############
-            # # # plot
-            # # ##############
-            # from utils_gu.mdl_visual import drawmultipolygon
-            # # draw new buffer result based on 0d-PH and 1d-PH
-            # drawmultipolygon(bldi_bf_optnew, bldi_2d, title=f"{bldi_name}: new buffer (r={bldi_bfr_optim:.4f})")
+
 
     ##############
     # save bfr_optim

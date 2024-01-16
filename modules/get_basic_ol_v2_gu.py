@@ -12,7 +12,6 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from shapely.geometry import Polygon
 from sklearn.cluster import DBSCAN
-from tsc.utils.viz import plot_persistence
 
 from utils.mdl_geo import arr2Geo
 from utils.mdl_procs import down_sample_cloud
@@ -21,18 +20,12 @@ from utils.mdl_PH_gu import calc_PH_gu, calc_PH_0d_gu, calc_PH_1d_gu
 
 def optim_bf_radius_gu(pers_1d: pd.DataFrame, bfr_0d: float, isDebug: bool = False) -> (float, pd.DataFrame):
     """
-    optimize buffer radius with considering the holes.
+    optimize buffer radius with considering the holes (get r_a).
     3.  Usually, the bfr_1d can be used as the auto-optimized buffer radius.
         However, when here are inner-holes of this building footprint, this bfr_1d will make the holes disappear.
         Hence, we need to further choose a proper bfr in the pers_1d,
         which can save the obvious holes and fill the small gaps caused by the uneven point distribution.
         The method is:
-            --- old strategy (01 May 2023) ---
-            cluster the 'pers' (meaning pers_time) in 'pers_1d' by DBSCAN, clustering_raiuds =  bfr_0d + 1e-2,
-            and choose the cluster with the min cluster-center value, as the pers_time cluster which can properly fill small holes.
-            Ultimately, in this cluster, the 'death' value of the pers pair with max 'pers', will be used as the diameter of the optimized buffer.
-            The final optimized bfr (buffer radius) = diameter / 2
-            --- newest strategy (02 May 2023) --- (now used)
             cluster the 'pers' (meaning pers_time) and 'death' in 'pers_1d' by DBSCAN, clustering_raiuds =  bfr_0d + 1e-2.
             Choose the cluster with the min cluster-center value in both 'pers' and 'death' clusters, as the cluster which can properly fill small holes.
             Ultimately, the max 'death' value in this cluster, will be used as the diameter of the optimized buffer.
@@ -49,9 +42,6 @@ def optim_bf_radius_gu(pers_1d: pd.DataFrame, bfr_0d: float, isDebug: bool = Fal
     pers_1d_perl = pers_1d["pers"].values
     pers_1d_death = pers_1d["death"].values
     # 2. DBSCAN, to cluster the pers time based on density
-    # the DBSCAN radius=bfr_0d, 因为 bfr_0d 代表了所有点能共同构成环的最小半径，
-    # 也就意味着只有当相邻持续时间的差值比这个大的时候，才有距离比较远的新环出现/被填满
-    # 容差: 1e-2
     pers_1d_perl = np.array(pers_1d_perl).reshape(-1, 1)
     cls_1d_perl = DBSCAN(eps=bfr_0d + 1e-2, min_samples=1).fit(pers_1d_perl)
     pers_1d["gr"] = cls_1d_perl.labels_
@@ -65,23 +55,7 @@ def optim_bf_radius_gu(pers_1d: pd.DataFrame, bfr_0d: float, isDebug: bool = Fal
               f"dbcls_num (death) = {len(np.unique(cls_1d_death.labels_))}")
 
     ###############
-    # old strategy:
-    # 3. use the DBSCAN cluster with the minimum value of cluster center,
-    # as the cluster which can just connect all points.
-    # and the death value with the corresponding max pers_time in this cluster,
-    # will be regarded as the diameter of the buffer,
-    # the optimized buffer radius = the diameter / 2
-    ###############
-    # clsid_prop_bfr = pers_1d.groupby(by=["gr"])["pers"].mean().sort_values().index[0]
-    # bfr_optm_pers = pers_1d.loc[pers_1d["gr"] == clsid_prop_bfr, "pers"].max()
-    # bfr_optm = pers_1d.loc[pers_1d["pers"] == bfr_optm_pers, "death"].values[0] / 2  # /2之后才是半径
-    ###############
-    # new strategy:
-    # 3. use the DBSCAN cluster of "pers" with the minimum value of cluster center,
-    #    and the DBSCAN cluster of "death" with the minimum value of cluster center,
-    # as the cluster which can just connect all points.
-    # and chose the max_death as the diameter of the buffer,
-    # the optimized buffer radius = the diameter / 2
+    # get r_a
     ###############
     clsid_bypers = pers_1d.groupby(by=["gr"])["pers"].mean().sort_values().index[0]
     clsid_bydeath = pers_1d.groupby(by=["gr_d"])["death"].mean().sort_values().index[0]
@@ -108,11 +82,6 @@ def get_autooptim_bf_radius_GU(bldi_2d: np.ndarray, down_sample_num: float = 500
         However, when here are inner-holes of this building footprint, this bfr_1d will make the holes disappear.
         Hence, we need to further choose a proper bfr in the pers_1d,
         which can save the obvious holes and fill the small gaps caused by the uneven point distribution.
-        The method is:
-            cluster the 'pers' (meaning pers_time) and 'death' in 'pers_1d' by DBSCAN, clustering_raiuds =  bfr_0d + 1e-2.
-            Choose the cluster with the min cluster-center value in both 'pers' and 'death' clusters, as the cluster which can properly fill small holes.
-            Ultimately, the max 'death' value in this cluster, will be used as the diameter of the optimized buffer.
-            The final optimized bfr (buffer radius) = diameter / 2
     :param bldi_2d:         shape=[n,2], 2 means (x,y). The 2d coordinates of a building roof's point clouds
     :param down_sample_num: the target number of the down-sampled point cloud data.
                             It's used to reduce the size of input cloud, to increase the running time of calc_1d_PH.
@@ -136,22 +105,6 @@ def get_autooptim_bf_radius_GU(bldi_2d: np.ndarray, down_sample_num: float = 500
     # get buffer radius by 0d and 1d PH (using gudhi)
     ##############
 
-    # if is_down==False: # not down_sampling for speed-up 1d
-    #     pers_0d, bfr_0d, pers_1d, bfr_1d = calc_PH_gu(bldi_2d, isDebug=True)# , isDebug=isDebug)
-    # else:
-    #     every_k_point = bldi_2d.shape[0] // down_sample_num  # floor(float)->int
-    #     if (down_sample_num > 0) and (every_k_point > 0):
-    #         bldi_2d_down = down_sample_cloud(bldi_2d, mode="uniform", value=every_k_point)
-    #         if isDebug:
-    #             print(f"[1-get_basic_ol/get_optim_bf_radius()] :: downsampling :: every_k_point={every_k_point}, "
-    #                   f"downsample_pcd_shape={bldi_2d_down.shape}")
-    #     else:
-    #         bldi_2d_down = bldi_2d
-    #
-    #     pers_0d, bfr_0d = calc_PH_0d_gu(bldi_2d)
-    #     pers_1d, bfr_1d = calc_PH_1d_gu(bldi_2d_down, isDebug=True)
-
-
     if is_down==False: # not down_sampling for speed-up 1d
         pers_0d, bfr_0d, pers_1d, bfr_1d = calc_PH_gu(bldi_2d, isDebug=True)# , isDebug=isDebug)
     else:
@@ -165,16 +118,13 @@ def get_autooptim_bf_radius_GU(bldi_2d: np.ndarray, down_sample_num: float = 500
             pers_0d, bfr_0d = calc_PH_0d_gu(bldi_2d)
             pers_1d, bfr_1d = calc_PH_1d_gu(bldi_2d_down, isDebug=True)
         else:
-            # bldi_2d_down = bldi_2d
             pers_0d, bfr_0d, pers_1d, bfr_1d = calc_PH_gu(bldi_2d, isDebug=True)  # , isDebug=isDebug)
 
 
     if isDebug:
         print(f"[1-get_basic_ol/get_optim_bf_radius()] :: calc_PH_0d :: bfr_0d={bfr_0d}, pers_0d=\n{pers_0d}")
         print(f"[1-get_basic_ol/get_optim_bf_radius()] :: calc_PH_1d :: bfr_1d={bfr_1d}, pers_1d=\n{pers_1d}")
-        plot_persistence(pers_1d, title="[1-/get_optim_bf_radius()] :: pers_1d persistence")
-        plt.show()
-        plt.close()
+
 
     # #############
     # analyse pers0d and pers1d, get the proper buffer radius
@@ -191,8 +141,6 @@ def get_build_bf(bld_2d: np.ndarray, bfr_optim: float, bf_tole: float = 5e-1, bf
 
     # create buffer
     bld_bf_optim = bld_geo.buffer(distance=bfr_optim + bf_tole)
-    # bld_bf_optim = bld_bf_optim.simplify(bfr_optim)
-    # bld_bf_optim = bld_bf_optim.buffer(distance=-(bfr_optim - 1e-1), quadsegs=1)
     if isDebug:
         print(f"[1-get_basic_ol/get_build_bf()] :: bld_bf_optim :: bld_bf_optim is {bld_bf_optim.geom_type}")
 
@@ -219,7 +167,7 @@ def get_build_bf(bld_2d: np.ndarray, bfr_optim: float, bf_tole: float = 5e-1, bf
         print(f"[1-get_basic_ol/get_build_bf()] :: {len(inters_save)} interiors are saved."
               f"the area of the final polygon is {bld_bf_optnew.area}")
 
-    # bld_bf_optnew = bld_bf_optnew.simplify(bfr_optim/2)
+    
     bld_bf_optnew = bld_bf_optnew.buffer(distance=-(bfr_optim + (bf_tole - bf_otdiff)))  # , quadsegs=1)
 
     new_bfr = 0.1
