@@ -22,5 +22,5 @@ data:
 
 eval:
   is_eval: True # whether evaluate the result. for prediction, set it to False
-  eval_gt_path: "/home/gefeik/PhD-work/footprint polygon/footprint polygon/own training/res/shp/true_shape/real_footprint.shp"
+  eval_gt_path: "/home/gefeik/PhD-work/footprint polygon/footprint polygon/own training/res/shp/true_shape/real_footprint_93.shp"
   is_save_res: True
