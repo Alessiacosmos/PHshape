@@ -20,7 +20,7 @@ from utils.mdl_PH_gu import calc_PH_gu, calc_PH_0d_gu, calc_PH_1d_gu
 
 def optim_bf_radius_gu(pers_1d: pd.DataFrame, bfr_0d: float, isDebug: bool = False) -> (float, pd.DataFrame):
     """
-    optimize buffer radius with considering the holes (get r_a).
+    optimize buffer radius with considering the holes.
     3.  Usually, the bfr_1d can be used as the auto-optimized buffer radius.
         However, when here are inner-holes of this building footprint, this bfr_1d will make the holes disappear.
         Hence, we need to further choose a proper bfr in the pers_1d,
@@ -106,7 +106,7 @@ def get_autooptim_bf_radius_GU(bldi_2d: np.ndarray, down_sample_num: float = 500
     ##############
 
     if is_down==False: # not down_sampling for speed-up 1d
-        pers_0d, bfr_0d, pers_1d, bfr_1d = calc_PH_gu(bldi_2d, isDebug=True)# , isDebug=isDebug)
+        pers_0d, bfr_0d, pers_1d, bfr_1d = calc_PH_gu(bldi_2d, isDebug=isDebug)# , isDebug=isDebug)
     else:
         every_k_point = bldi_2d.shape[0] // down_sample_num  # floor(float)->int
         if (down_sample_num > 0) and (every_k_point > 0):
@@ -116,9 +116,10 @@ def get_autooptim_bf_radius_GU(bldi_2d: np.ndarray, down_sample_num: float = 500
                       f"downsample_pcd_shape={bldi_2d_down.shape}")
 
             pers_0d, bfr_0d = calc_PH_0d_gu(bldi_2d)
-            pers_1d, bfr_1d = calc_PH_1d_gu(bldi_2d_down, isDebug=True)
+            pers_1d, bfr_1d = calc_PH_1d_gu(bldi_2d_down, isDebug=isDebug)
         else:
-            pers_0d, bfr_0d, pers_1d, bfr_1d = calc_PH_gu(bldi_2d, isDebug=True)  # , isDebug=isDebug)
+            # bldi_2d_down = bldi_2d
+            pers_0d, bfr_0d, pers_1d, bfr_1d = calc_PH_gu(bldi_2d, isDebug=isDebug)  # , isDebug=isDebug)
 
 
     if isDebug:
@@ -167,7 +168,7 @@ def get_build_bf(bld_2d: np.ndarray, bfr_optim: float, bf_tole: float = 5e-1, bf
         print(f"[1-get_basic_ol/get_build_bf()] :: {len(inters_save)} interiors are saved."
               f"the area of the final polygon is {bld_bf_optnew.area}")
 
-    
+    # bld_bf_optnew = bld_bf_optnew.simplify(bfr_optim/2)
     bld_bf_optnew = bld_bf_optnew.buffer(distance=-(bfr_optim + (bf_tole - bf_otdiff)))  # , quadsegs=1)
 
     new_bfr = 0.1
